@@ -1,0 +1,81 @@
+---
+import Base from '../layouts/Base.astro';
+import entries from '../data/bakeoff.json';
+
+interface BakeoffEntry {
+  card: string;
+  model: string;
+  clip: string;
+  image: string;
+  usedText: boolean;
+}
+const list = entries as BakeoffEntry[];
+const TOTAL = 16;
+---
+
+<Base title="Image-to-video model bake-off — The Magic Gallery" description="16 Magic cards, each animated by a different Replicate image-to-video model.">
+  <a href="/" class="back">← Home</a>
+
+  <header class="bo-head">
+    <p class="kicker">Image-to-video bake-off</p>
+    <h1>16 cards · 16 models</h1>
+    <p class="facts">{list.length} of {TOTAL} generated · each card animated by a different Replicate model</p>
+  </header>
+
+  {list.length === 0 ? (
+    <p class="empty">No clips yet. Run <code>npm run build:bakeoff</code>, then refresh — they appear as they finish.</p>
+  ) : (
+    <div class="bo-grid">
+      {list.map((e) => (
+        <figure class="bo">
+          <video class="bo-vid" src={e.clip} poster={e.image} autoplay loop muted playsinline preload="metadata"></video>
+          <figcaption>
+            <span class="bo-card">{e.card}</span>
+            {e.set && <span class="bo-set">{e.set}</span>}
+            <span class="bo-model">{e.model}</span>
+            <span class={`bo-mode ${e.usedText ? 'tx' : ''}`}>{e.usedText ? '✦ text + image' : 'image only'}</span>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  )}
+
+  <style>
+    .back {
+      display: inline-block; margin: 8px 0 22px; color: var(--muted);
+      text-decoration: none; font-family: var(--mono); font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .back:hover { color: var(--brass); }
+    .bo-head { border-bottom: 1px solid var(--line); padding-bottom: 22px; margin-bottom: 28px; }
+    .kicker { margin: 0 0 6px; color: var(--patina); font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; }
+    .bo-head h1 { margin: 0 0 10px; font-size: clamp(2rem, 4.5vw, 3rem); color: var(--brass-bright); text-shadow: 0 1px 0 #000, 0 0 26px rgba(140,176,214,0.18); }
+    .facts { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.05em; }
+    .empty { color: var(--muted); font-style: italic; padding: 30px 0; }
+    .empty code { font-family: var(--mono); color: var(--arcane); font-style: normal; }
+
+    .bo-grid {
+      display: grid; gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+    .bo { margin: 0; }
+    .bo-vid {
+      width: 100%; aspect-ratio: 488 / 680; object-fit: contain; background: var(--panel-2);
+      border-radius: 10px; border: 1px solid var(--line);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.10), 0 6px 18px rgba(0,0,0,0.5);
+    }
+    .bo figcaption { margin-top: 10px; display: flex; flex-direction: column; gap: 3px; }
+    .bo-card { font-size: 0.95rem; color: var(--text); }
+    .bo-set { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--patina); }
+    .bo-model {
+      font-family: var(--mono); font-size: 0.72rem; color: var(--brass-bright);
+      letter-spacing: 0.02em; word-break: break-all;
+    }
+    .bo-mode { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .bo-mode.tx { color: var(--arcane); }
+
+    @media (max-width: 600px) {
+      .bo-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+  </style>
+</Base>

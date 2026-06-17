@@ -1,0 +1,42 @@
+[
+  {
+    "scryfallName": "Seb McKinnon",
+    "canonicalDisplayName": "Seb McKinnon",
+    "nftNote": "Sells NFTs of his own original art / film work; well-documented crypto-art creator.",
+    "openSeaCollections": ["seb-mckinnon"],
+    "collectionsVerified": false,
+    "walletAddress": "",
+    "sampleFloorEth": 0.42
+  },
+  {
+    "scryfallName": "Noah Bradley",
+    "canonicalDisplayName": "Noah Bradley",
+    "nftNote": "Sold NFT collections of his own original art.",
+    "openSeaCollections": ["noah-bradley"],
+    "collectionsVerified": false,
+    "walletAddress": "",
+    "sampleFloorEth": 0.18
+  },
+  {
+    "scryfallName": "Peter Mohrbacher",
+    "canonicalDisplayName": "Peter Mohrbacher",
+    "nftNote": "Angelarium NFT artist; original art on the fm-gallery contract.",
+    "openSeaCollections": ["fm-gallery"],
+    "collectionsVerified": true,
+    "walletAddress": "",
+    "sampleFloorEth": null,
+    "nftTokens": [
+      { "chain": "ethereum", "contract": "0x537eb102e8a97c1c3a623da6d3d03171dd8cf6d6", "id": "23" },
+      { "chain": "ethereum", "contract": "0x537eb102e8a97c1c3a623da6d3d03171dd8cf6d6", "id": "62" }
+    ]
+  },
+  {
+    "scryfallName": "Kirsten Zirngibl",
+    "canonicalDisplayName": "Kirsten Zirngibl",
+    "nftNote": "Minted the first MTG-art NFT in 2021 (later de-listed).",
+    "openSeaCollections": ["kirsten-zirngibl"],
+    "collectionsVerified": false,
+    "walletAddress": "",
+    "sampleFloorEth": null
+  }
+]

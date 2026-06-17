@@ -1,0 +1,391 @@
+---
+// Full-screen slideshow for a room. Auto-advances through the room's art with
+// a user-variable delay. Takes the baked slides (server-rendered) and, when
+// present, an overflow URL it fetches on open so the gallery rotates the WHOLE
+// room, not just the first page.
+interface Slide {
+  image: string;
+  name: string;
+  setCode: string;
+  year: number;
+  artists?: { name: string; slug: string }[];
+  clip?: string | null; // optional pre-baked clip to play instead of the still
+}
+interface Props {
+  slides: Slide[];
+  overflowUrl?: string | null;
+  title: string;
+  // Clicking an element matching tileSelector opens the gallery at that card;
+  // the card's image URL is read from tileImageAttr.
+  tileSelector?: string | null;
+  tileImageAttr?: string;
+  buttonLabel?: string;
+}
+const { slides, overflowUrl = null, title, tileSelector = null, tileImageAttr = 'data-img', buttonLabel = '⛶ Gallery view' } = Astro.props;
+---
+
+<button id="gallery-open" class="gallery-btn" type="button">{buttonLabel}</button>
+
+<div id="gallery" class="gallery" hidden aria-hidden="true" role="dialog" aria-label={`${title} gallery`}>
+  <span class="g-room">{title}</span>
+  <div id="g-stage" class="g-stage">
+    <img id="g-img" class="g-img" alt="" />
+    <video id="g-video" class="g-video" hidden loop muted playsinline></video>
+    <span id="g-live" class="g-live" hidden>● Live</span>
+    <span id="g-vibe" class="g-vibe" hidden>✦ <span id="g-vibe-label"></span></span>
+  </div>
+  <div class="g-caption">
+    <span id="g-title" class="g-title"></span>
+    <span id="g-sub" class="g-sub"></span>
+  </div>
+  <div id="g-vibes" class="g-vibes" hidden></div>
+  <div class="g-controls">
+    <button id="g-prev" class="g-ctl" type="button" title="Previous (←)" aria-label="Previous">‹</button>
+    <button id="g-play" class="g-ctl" type="button" title="Pause (space)" aria-label="Pause">⏸</button>
+    <button id="g-next" class="g-ctl" type="button" title="Next (→)" aria-label="Next">›</button>
+    <label class="g-delay" title="Seconds per slide">
+      <input id="g-delay" type="range" min="2" max="30" step="1" value="10" aria-label="Seconds per slide" />
+      <span id="g-delay-val" class="g-delay-val">10s</span>
+    </label>
+    <span id="g-count" class="g-count"></span>
+    <button id="g-close" class="g-ctl" type="button" title="Close (Esc)" aria-label="Close">✕</button>
+  </div>
+</div>
+
+<script define:vars={{ baked: slides, overflowUrl, tileSelector, tileImageAttr }}>
+  const root = document.getElementById('gallery');
+  const openBtn = document.getElementById('gallery-open');
+  const img = document.getElementById('g-img');
+  const video = document.getElementById('g-video');
+  const live = document.getElementById('g-live');
+  const vibeBadge = document.getElementById('g-vibe');
+  const vibeLabel = document.getElementById('g-vibe-label');
+  const stage = document.getElementById('g-stage');
+  const titleEl = document.getElementById('g-title');
+  const subEl = document.getElementById('g-sub');
+  const countEl = document.getElementById('g-count');
+  const prevBtn = document.getElementById('g-prev');
+  const nextBtn = document.getElementById('g-next');
+  const playBtn = document.getElementById('g-play');
+  const closeBtn = document.getElementById('g-close');
+  const delayInput = document.getElementById('g-delay');
+  const delayVal = document.getElementById('g-delay-val');
+  const vibesEl = document.getElementById('g-vibes');
+
+  function toSlide(r) {
+    const by = r.artists && r.artists.length ? ' · ' + r.artists.map((a) => a.name).join(' & ') : '';
+    const sub = [r.setCode, r.year].filter(Boolean).join(' ') + by;
+    return { image: r.image, title: r.name, sub, clip: r.clip || null };
+  }
+
+  let slides = baked.map(toSlide);
+  let idx = 0;
+  let delay = 10000;
+  let playing = true;
+  let timer = null;
+  let overflowLoaded = false;
+  let pendingImage = null; // when opened via a tile click, the card to land on
+  const indexOfImage = (image) => slides.findIndex((s) => s.image === image);
+  // image URL -> generated clip URL. Loaded once; empty until clips exist.
+  let videos = {};
+  let videosLoaded = false;
+
+  async function loadVideos() {
+    if (videosLoaded) return;
+    videosLoaded = true;
+    try {
+      const res = await fetch('/data/video-manifest.json');
+      if (res.ok) videos = await res.json();
+    } catch {}
+  }
+
+  // vibe slug -> { label, images }. Drives the in-gallery vibe switcher.
+  let vibeManifest = {};
+  let vibesManifestLoaded = false;
+  async function loadVibeManifest() {
+    if (vibesManifestLoaded) return;
+    vibesManifestLoaded = true;
+    try {
+      const res = await fetch('/data/vibe-manifest.json');
+      if (res.ok) vibeManifest = await res.json();
+    } catch {}
+  }
+
+  function availableVibes() {
+    const imgs = new Set(slides.map((s) => s.image));
+    return Object.keys(vibeManifest).filter((k) => Object.keys(vibeManifest[k].images).some((u) => imgs.has(u)));
+  }
+
+  function setVibe(slug) {
+    const v = slug ? vibeManifest[slug] : null;
+    window.__activeVibe = v ? { slug, label: v.label, images: v.images } : null;
+    show(idx); // re-render the current slide through the new vibe
+    [...vibesEl.children].forEach((c) => c.classList.toggle('active', (c.dataset.slug || '') === (slug || '')));
+    // Keep the room grid behind the overlay in sync (no-op where unhandled).
+    window.dispatchEvent(new CustomEvent('gallery-vibe', { detail: { slug: slug || null } }));
+  }
+
+  function buildVibeSwitcher() {
+    const avail = availableVibes();
+    if (!avail.length) { vibesEl.hidden = true; vibesEl.innerHTML = ''; return; }
+    const active = (window.__activeVibe && window.__activeVibe.slug) || '';
+    const chip = (slug, label) =>
+      `<button class="g-vibe-chip${(slug || '') === active ? ' active' : ''}" type="button" data-slug="${slug}">${label}</button>`;
+    vibesEl.innerHTML = chip('', 'Original') + avail.map((s) => chip(s, vibeManifest[s].label)).join('');
+    vibesEl.querySelectorAll('.g-vibe-chip').forEach((c) => c.addEventListener('click', () => setVibe(c.dataset.slug || null)));
+    vibesEl.hidden = false;
+  }
+
+  function updateCount() {
+    countEl.textContent = `${idx + 1} / ${slides.length}`;
+  }
+
+  // The room page publishes the applied vibe here; an active vibe's restyled
+  // still takes precedence over the animated clip.
+  function vibeSrcFor(s) {
+    const av = window.__activeVibe;
+    return (av && av.images && av.images[s.image]) || null;
+  }
+
+  function show(i) {
+    idx = (i + slides.length) % slides.length;
+    const s = slides[idx];
+    const vibe = vibeSrcFor(s);
+    const clip = !vibe && (s.clip || videos[s.image]);
+    if (clip) {
+      // Animated slide: play the generated clip, hide the still.
+      img.hidden = true;
+      vibeBadge.hidden = true;
+      video.hidden = false;
+      live.hidden = false;
+      if (video.src !== clip) video.src = clip;
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    } else {
+      video.hidden = true;
+      video.pause();
+      live.hidden = true;
+      const stillSrc = vibe || s.image;
+      vibeBadge.hidden = !vibe;
+      if (vibe) vibeLabel.textContent = window.__activeVibe.label;
+      img.hidden = false;
+      img.alt = s.title;
+      if (img.getAttribute('src') !== stillSrc) {
+        img.style.opacity = '0';
+        img.onload = () => { img.style.opacity = '1'; };
+        img.src = stillSrc;
+        if (img.complete) img.style.opacity = '1'; // cached: onload may not fire
+      } else {
+        img.style.opacity = '1';
+      }
+    }
+    titleEl.textContent = s.title;
+    subEl.textContent = s.sub;
+    updateCount();
+    // Warm the following still (restyled if a vibe is active) for an instant advance.
+    if (slides.length > 1) {
+      const n = slides[(idx + 1) % slides.length];
+      new Image().src = vibeSrcFor(n) || n.image;
+    }
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    if (playing && slides.length > 1) {
+      timer = setTimeout(() => {
+        show(idx + 1);
+        schedule();
+      }, delay);
+    }
+  }
+
+  function setPlaying(p) {
+    playing = p;
+    playBtn.textContent = p ? '⏸' : '▶';
+    playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+    schedule();
+  }
+
+  async function loadOverflow() {
+    if (!overflowUrl || overflowLoaded) return;
+    overflowLoaded = true;
+    try {
+      const res = await fetch(overflowUrl);
+      const more = await res.json();
+      slides = slides.concat(more.map(toSlide));
+      updateCount();
+      buildVibeSwitcher(); // a vibe may cover cards that were in the overflow
+      if (pendingImage != null) { const i = indexOfImage(pendingImage); if (i >= 0) show(i); pendingImage = null; }
+      schedule(); // a single-slide room can now auto-advance
+    } catch {
+      overflowLoaded = false; // allow a retry on next open
+    }
+  }
+
+  async function open() {
+    root.hidden = false;
+    root.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    if (root.requestFullscreen) root.requestFullscreen().catch(() => {}); // keep the user gesture
+    await Promise.all([loadVideos(), loadVibeManifest()]);
+    let start = 0;
+    if (pendingImage != null) {
+      const i = indexOfImage(pendingImage);
+      if (i >= 0) { start = i; pendingImage = null; } // else: card is in overflow, jump after it loads
+    }
+    show(start);
+    setPlaying(true);
+    buildVibeSwitcher();
+    loadOverflow();
+  }
+
+  // Open the gallery already showing a specific card (used by room tile clicks).
+  window.__galleryOpenAt = (image) => {
+    if (!root.hidden) { const i = indexOfImage(image); if (i >= 0) go(i); return; }
+    pendingImage = image;
+    open();
+  };
+
+  function close() {
+    if (root.hidden) return;
+    root.hidden = true;
+    root.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    pendingImage = null;
+    clearTimeout(timer);
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  }
+
+  // Manual navigation resets the auto-advance clock so a click never feels rushed.
+  function go(i) {
+    show(i);
+    schedule();
+  }
+
+  openBtn.addEventListener('click', () => { pendingImage = null; open(); });
+  closeBtn.addEventListener('click', close);
+
+  // Click any room tile (image) → open the gallery on that card.
+  if (tileSelector) {
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest(tileSelector);
+      if (!el) return;
+      const image = el.getAttribute(tileImageAttr);
+      if (image) window.__galleryOpenAt(image);
+    });
+  }
+  prevBtn.addEventListener('click', () => go(idx - 1));
+  nextBtn.addEventListener('click', () => go(idx + 1));
+  stage.addEventListener('click', () => go(idx + 1));
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  delayInput.addEventListener('input', (e) => {
+    delay = Number(e.target.value) * 1000;
+    delayVal.textContent = `${e.target.value}s`;
+    schedule();
+  });
+
+  // If the user leaves OS fullscreen (Esc), exit the gallery too.
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) close();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (root.hidden) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowRight') go(idx + 1);
+    else if (e.key === 'ArrowLeft') go(idx - 1);
+    else if (e.key === ' ') {
+      e.preventDefault();
+      setPlaying(!playing);
+    }
+  });
+</script>
+
+<style>
+  .gallery-btn {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--arcane); color: var(--brass-bright);
+    padding: 9px 18px; border-radius: 6px;
+    font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+    box-shadow: inset 0 1px 0 rgba(200,228,245,0.18), 0 0 16px rgba(79,180,230,0.10);
+    transition: all 0.15s;
+  }
+  .gallery-btn:hover { border-color: var(--brass-bright); box-shadow: 0 0 22px rgba(79,180,230,0.22); }
+
+  .gallery[hidden] { display: none; }
+  .gallery {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background:
+      radial-gradient(1000px 600px at 50% 0%, rgba(79,180,230,0.08), transparent 70%),
+      rgba(6, 8, 13, 0.97);
+    backdrop-filter: blur(6px);
+  }
+  .g-room {
+    position: absolute; top: 18px; left: 22px;
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--patina);
+  }
+  .g-stage {
+    position: relative; flex: 1; min-height: 0; width: 100%;
+    display: flex; align-items: center; justify-content: center; padding: 40px 24px 12px; cursor: pointer;
+  }
+  .g-img, .g-video {
+    /* Fixed height so every slide is the SAME size regardless of the source
+       image's resolution (restyled vibe jpgs are higher-res than the cards). */
+    height: 76vh; width: auto; max-width: 92vw; object-fit: contain; border-radius: 12px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.8), 0 0 50px rgba(79,180,230,0.14);
+  }
+  .g-img { transition: opacity 0.4s ease; }
+  .g-img[hidden], .g-video[hidden] { display: none; }
+  .g-live {
+    position: absolute; top: 16px; right: 22px;
+    font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--arcane); display: inline-flex; align-items: center; gap: 6px;
+  }
+  .g-live[hidden] { display: none; }
+  .g-vibe {
+    position: absolute; top: 16px; right: 22px;
+    font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #d98fd0; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .g-vibe[hidden] { display: none; }
+  .g-vibes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; padding: 0 16px; }
+  .g-vibes[hidden] { display: none; }
+  .g-vibe-chip {
+    cursor: pointer; font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 6px 13px; border-radius: 999px; border: 1px solid var(--line); background: rgba(13,16,22,0.7); color: var(--muted);
+    transition: all 0.15s;
+  }
+  .g-vibe-chip:hover { border-color: #d98fd0; color: #d98fd0; }
+  .g-vibe-chip.active { border-color: #d98fd0; color: #d98fd0; box-shadow: 0 0 14px rgba(217,143,208,0.25); }
+
+  .g-caption { text-align: center; padding: 6px 16px 14px; }
+  .g-title { display: block; font-family: var(--display); color: var(--brass-bright); font-size: 1.2rem; letter-spacing: 0.02em; }
+  .g-sub { color: var(--muted); font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.03em; }
+
+  .g-controls {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(13,16,22,0.8); border: 1px solid var(--line);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  }
+  .g-ctl {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--brass-bright);
+    font-size: 1.1rem; line-height: 1; transition: all 0.15s;
+  }
+  .g-ctl:hover { border-color: var(--brass); color: #fff; box-shadow: 0 0 14px rgba(79,180,230,0.2); }
+  .g-delay { display: inline-flex; align-items: center; gap: 10px; padding: 0 6px; }
+  .g-delay input[type='range'] { width: 130px; accent-color: var(--arcane); cursor: pointer; }
+  .g-delay-val { font-family: var(--mono); font-size: 0.72rem; color: var(--text); min-width: 30px; }
+  .g-count { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); min-width: 64px; text-align: center; }
+
+  @media (max-width: 600px) {
+    .g-controls { gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 94vw; }
+    .g-delay input[type='range'] { width: 92px; }
+    .g-img { max-height: 64vh; }
+  }
+</style>

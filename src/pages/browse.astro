@@ -1,0 +1,273 @@
+---
+import Base from '../layouts/Base.astro';
+import { COLOR_NAMES } from '../lib/types';
+import type { ArtistIndexEntry } from '../lib/types';
+import artists from '../data/artists.json';
+import roomsIndex from '../data/rooms-index.json';
+
+interface RoomIndexEntry {
+  slug: string;
+  label: string;
+  featured: boolean;
+  count: number;
+  previewImage: string | null;
+}
+
+const artistList = artists as ArtistIndexEntry[];
+const themeList = roomsIndex as RoomIndexEntry[];
+
+// Artist rooms reuse the index records as room tiles.
+const artistRooms = artistList.map((a) => ({
+  slug: a.slug,
+  label: a.displayName,
+  count: a.cardCount,
+  previewImage: a.previewImage,
+  hasNFTs: a.hasNFTs,
+  dominantColor: a.dominantColor,
+  primaryEra: a.primaryEra,
+}));
+
+const totalArtworks = artistList.reduce((s, a) => s + a.cardCount, 0);
+const eras = [...new Set(artistList.map((a) => a.primaryEra))].sort();
+const PAGE_SIZE = 24;
+---
+
+<Base title="Browse the archive — The Magic Gallery">
+  <section class="hero">
+    <h1>Magic art, room by room.</h1>
+    <p class="sub">
+      Browse Magic: The Gathering art by theme, or by the artist who made it —
+      every painter, one gallery.
+    </p>
+    <div class="stats">
+      <div><strong>{totalArtworks.toLocaleString()}</strong><span>artworks</span></div>
+      <div><strong>{themeList.length}</strong><span>theme rooms</span></div>
+      <div><strong>{artistRooms.length.toLocaleString()}</strong><span>artist rooms</span></div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="mode" role="group" aria-label="Room type">
+      <button class="chip active" data-mode="themes">By theme</button>
+      <button class="chip" data-mode="artists">By artist</button>
+    </div>
+    <input id="search" type="search" placeholder="Search rooms…" autocomplete="off" />
+    <div id="artist-filters" class="artist-filters" hidden>
+      <select id="era">
+        <option value="all">All eras</option>
+        {eras.map((e) => <option value={e}>{e}</option>)}
+      </select>
+    </div>
+  </section>
+
+  <p id="result-count" class="result-count"></p>
+  <div id="grid" class="grid"></div>
+  <div class="more-wrap">
+    <button id="load-more" class="load-more" hidden>Load more</button>
+  </div>
+  <p id="empty" class="empty" hidden>No rooms match those filters.</p>
+
+  <script define:vars={{ themes: themeList, artistRooms, PAGE_SIZE, colorNames: COLOR_NAMES }}>
+    const state = { mode: 'themes', q: '', era: 'all', shown: PAGE_SIZE };
+
+    const grid = document.getElementById('grid');
+    const moreBtn = document.getElementById('load-more');
+    const empty = document.getElementById('empty');
+    const count = document.getElementById('result-count');
+    const artistFilters = document.getElementById('artist-filters');
+    const search = document.getElementById('search');
+
+    function filtered() {
+      if (state.mode === 'themes') {
+        return themes.filter((r) => !state.q || r.label.toLowerCase().includes(state.q));
+      }
+      return artistRooms.filter((a) => {
+        if (state.era !== 'all' && a.primaryEra !== state.era) return false;
+        if (state.q && !a.label.toLowerCase().includes(state.q)) return false;
+        return true;
+      });
+    }
+
+    function themeTile(r) {
+      const badge = r.featured ? `<span class="badge">◆ Featured</span>` : '';
+      const bg = r.previewImage ? `background-image:url('${r.previewImage}')` : '';
+      return `
+        <a class="tile" href="/rooms/${r.slug}/">
+          <div class="thumb" style="${bg}">${badge}</div>
+          <div class="meta">
+            <span class="name cap">${r.label}</span>
+            <span class="sub">${r.count.toLocaleString()} ${r.count === 1 ? 'artwork' : 'artworks'}</span>
+          </div>
+        </a>`;
+    }
+
+    function artistTile(a) {
+      const badge = a.hasNFTs ? `<span class="badge">◆ NFT</span>` : '';
+      const bg = a.previewImage ? `background-image:url('${a.previewImage}')` : '';
+      return `
+        <a class="tile" href="/rooms/artist/${a.slug}/">
+          <div class="thumb" style="${bg}">${badge}</div>
+          <div class="meta">
+            <span class="name">${a.label}</span>
+            <span class="sub">
+              <span class="dot c-${a.dominantColor}"></span>${colorNames[a.dominantColor] || a.dominantColor}
+              · ${a.primaryEra} · ${a.count} works
+            </span>
+          </div>
+        </a>`;
+    }
+
+    function render() {
+      const results = filtered();
+      const page = results.slice(0, state.shown);
+      const tile = state.mode === 'themes' ? themeTile : artistTile;
+      grid.innerHTML = page.map(tile).join('');
+      empty.hidden = results.length !== 0;
+      moreBtn.hidden = state.shown >= results.length;
+      const noun = state.mode === 'themes' ? 'theme rooms' : 'artist rooms';
+      count.textContent = results.length ? `Showing ${page.length} of ${results.length} ${noun}` : '';
+    }
+
+    search.addEventListener('input', (e) => {
+      state.q = e.target.value.trim().toLowerCase();
+      state.shown = PAGE_SIZE;
+      render();
+    });
+    document.getElementById('era').addEventListener('change', (e) => {
+      state.era = e.target.value;
+      state.shown = PAGE_SIZE;
+      render();
+    });
+    document.querySelectorAll('.mode .chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode .chip').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+        state.shown = PAGE_SIZE;
+        artistFilters.hidden = state.mode !== 'artists';
+        search.placeholder = state.mode === 'themes' ? 'Search rooms…' : 'Search artists…';
+        render();
+      });
+    });
+    moreBtn.addEventListener('click', () => {
+      state.shown += PAGE_SIZE;
+      render();
+    });
+
+    render();
+  </script>
+
+  <style>
+    .hero { position: relative; text-align: center; padding: 52px 0 22px; }
+    /* Transmuter's portal — concentric rings + arcane glow behind the title. */
+    .hero::before {
+      content: ''; position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%);
+      width: min(560px, 86vw); aspect-ratio: 1; border-radius: 50%; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(circle, transparent 0 37.5%, rgba(111,200,238,0.16) 37.5% 38.5%, transparent 39%),
+        radial-gradient(circle, transparent 0 47.5%, rgba(140,176,214,0.13) 47.5% 48.3%, transparent 49%),
+        radial-gradient(circle at 50% 34%, rgba(111,200,238,0.12), transparent 62%);
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); margin: 0 0 14px; letter-spacing: 0.05em;
+      color: var(--brass-bright); text-shadow: 0 1px 0 #000, 0 0 34px rgba(111,200,238,0.35);
+    }
+    .hero .sub { color: var(--muted); max-width: 640px; margin: 0 auto; font-size: 1.1rem; line-height: 1.5; }
+
+    .stats { display: flex; justify-content: center; align-items: stretch; gap: 0; margin-top: 28px; }
+    .stats div { display: flex; flex-direction: column; gap: 4px; padding: 0 30px; }
+    .stats div + div { border-left: 1px solid var(--line); }
+    .stats strong { font-family: var(--display); font-size: 1.9rem; color: var(--brass-bright); line-height: 1; }
+    .stats span { color: var(--muted); font-family: var(--mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.14em; }
+
+    .controls {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: center;
+      margin: 34px 0 8px;
+    }
+    #search, #era {
+      background: var(--panel); border: 1px solid var(--line); color: var(--text);
+      padding: 10px 16px; border-radius: 6px; font-size: 0.95rem; outline: none;
+      font-family: var(--body); box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    }
+    #search { min-width: 240px; }
+    #search:focus, #era:focus { border-color: var(--brass); box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(140,176,214,0.18); }
+    #search::placeholder { color: var(--muted); }
+    .mode, .artist-filters { display: flex; gap: 6px; align-items: center; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+      padding: 9px 15px; border-radius: 6px; cursor: pointer;
+      font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+      transition: all 0.15s;
+    }
+    .chip:hover { color: var(--text); border-color: var(--brass); }
+    .chip.active {
+      background: linear-gradient(180deg, rgba(140,176,214,0.18), rgba(140,176,214,0.06));
+      color: var(--brass-bright); border-color: var(--brass);
+      box-shadow: inset 0 1px 0 rgba(200,228,245,0.25), 0 0 14px rgba(140,176,214,0.14);
+    }
+    /* Tiles are injected via innerHTML (client filter/toggle), so they never
+       receive Astro's scope attribute — these selectors must be :global. */
+    :global(.dot) { width: 11px; height: 11px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 1px rgba(0,0,0,0.5) inset; }
+    :global(.c-W) { background: var(--W); } :global(.c-U) { background: var(--U); } :global(.c-B) { background: var(--B); }
+    :global(.c-R) { background: var(--R); } :global(.c-G) { background: var(--G); } :global(.c-C) { background: var(--C); }
+
+    .result-count { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 16px 0 20px; min-height: 1em; }
+
+    .grid {
+      display: grid; gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(244px, 1fr));
+    }
+    /* Card plate: framed tile holding the full card image. */
+    :global(.tile) {
+      position: relative; display: block; text-decoration: none; color: inherit;
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.10), inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 22px rgba(0,0,0,0.55);
+      transition: transform 0.16s ease, border-color 0.16s, box-shadow 0.16s;
+    }
+    :global(.tile:hover) {
+      transform: translateY(-4px); border-color: var(--brass);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.30), 0 10px 26px rgba(0,0,0,0.6), 0 0 26px rgba(79,180,230,0.12);
+    }
+    :global(.thumb) {
+      aspect-ratio: 488 / 680; background-size: contain; background-repeat: no-repeat; background-position: center;
+      position: relative; background-color: var(--panel-2);
+      border-bottom: 1px solid var(--line);
+    }
+    :global(.badge) {
+      position: absolute; top: 10px; right: 10px; z-index: 3;
+      background: linear-gradient(180deg, rgba(10,16,26,0.92), rgba(6,10,18,0.92));
+      color: var(--brass-bright); border: 1px solid var(--brass);
+      padding: 3px 9px; border-radius: 4px; font-size: 0.62rem; font-family: var(--mono);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    :global(.meta) { padding: 13px 15px 15px; display: flex; flex-direction: column; gap: 6px; }
+    :global(.meta .name) { font-size: 1.08rem; font-weight: 500; color: var(--text); line-height: 1.2; }
+    :global(.meta .name.cap) {
+      font-family: var(--display); text-transform: uppercase; letter-spacing: 0.06em;
+      font-size: 0.92rem; color: var(--brass-bright);
+    }
+    :global(.meta .sub) {
+      color: var(--muted); font-size: 0.72rem; font-family: var(--mono); letter-spacing: 0.04em;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    .more-wrap { text-align: center; margin: 32px 0 4px; }
+    .load-more {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--brass); color: var(--brass-bright);
+      padding: 11px 28px; border-radius: 6px; cursor: pointer; font-size: 0.74rem;
+      font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.12em;
+      box-shadow: inset 0 1px 0 rgba(200,228,245,0.2);
+      transition: all 0.15s;
+    }
+    .load-more:hover { background: linear-gradient(180deg, var(--brass), var(--copper)); color: #08111c; border-color: var(--brass-bright); }
+    .empty { text-align: center; color: var(--muted); padding: 40px 0; font-style: italic; }
+
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .stats div { padding: 0 16px; }
+    }
+  </style>
+</Base>

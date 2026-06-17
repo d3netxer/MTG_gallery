@@ -1,0 +1,204 @@
+{
+  "rooms": [
+    {
+      "slug": "planeswalker",
+      "label": "planeswalker",
+      "featured": true
+    },
+    {
+      "slug": "dominaria-origin",
+      "label": "dominaria (origin)",
+      "featured": true
+    },
+    {
+      "slug": "dominaria",
+      "label": "dominaria",
+      "featured": true
+    },
+    {
+      "slug": "dungeons-and-dragons",
+      "label": "dungeons and dragons",
+      "featured": true
+    },
+    {
+      "slug": "dnd-multiverse",
+      "label": "dnd multiverse",
+      "featured": true
+    },
+    {
+      "slug": "anthropomorphic",
+      "label": "anthropomorphic",
+      "featured": true
+    },
+    {
+      "slug": "animal-person",
+      "label": "animal person",
+      "featured": true
+    },
+    {
+      "slug": "zendikar",
+      "label": "zendikar",
+      "featured": true
+    },
+    {
+      "slug": "dragon",
+      "label": "dragon",
+      "featured": true
+    },
+    {
+      "slug": "lgbtq-plus",
+      "label": "lgbtq-plus",
+      "featured": true
+    },
+    {
+      "slug": "person-of-color",
+      "label": "person of color",
+      "featured": true
+    },
+    {
+      "slug": "ravnica",
+      "label": "ravnica",
+      "featured": true
+    },
+    {
+      "slug": "elf",
+      "label": "elf",
+      "featured": false
+    },
+    {
+      "slug": "ravnica-guild",
+      "label": "ravnica guild",
+      "featured": false
+    },
+    {
+      "slug": "kamigawa-origin",
+      "label": "kamigawa (origin)",
+      "featured": false
+    },
+    {
+      "slug": "innistrad-origin",
+      "label": "innistrad (origin)",
+      "featured": false
+    },
+    {
+      "slug": "gatewatch",
+      "label": "gatewatch",
+      "featured": false
+    },
+    {
+      "slug": "god",
+      "label": "god",
+      "featured": false
+    },
+    {
+      "slug": "theros-origin",
+      "label": "theros (origin)",
+      "featured": false
+    },
+    {
+      "slug": "innistrad",
+      "label": "innistrad",
+      "featured": false
+    },
+    {
+      "slug": "ravnica-origin",
+      "label": "ravnica (origin)",
+      "featured": false
+    },
+    {
+      "slug": "phyrexian",
+      "label": "phyrexian",
+      "featured": false
+    },
+    {
+      "slug": "faction-symbol",
+      "label": "faction symbol",
+      "featured": false
+    },
+    {
+      "slug": "symbol",
+      "label": "symbol",
+      "featured": false
+    },
+    {
+      "slug": "mirrodin-new-phyrexia",
+      "label": "mirrodin/new phyrexia",
+      "featured": false
+    },
+    {
+      "slug": "spirit",
+      "label": "spirit",
+      "featured": false
+    },
+    {
+      "slug": "aquatic-creature",
+      "label": "aquatic creature",
+      "featured": false
+    },
+    {
+      "slug": "cat",
+      "label": "cat",
+      "featured": false
+    },
+    {
+      "slug": "weatherlight-crew",
+      "label": "weatherlight crew",
+      "featured": false
+    },
+    {
+      "slug": "vampire",
+      "label": "vampire",
+      "featured": false
+    },
+    {
+      "slug": "zendikar-origin",
+      "label": "zendikar (origin)",
+      "featured": false
+    },
+    {
+      "slug": "wing",
+      "label": "wing",
+      "featured": false
+    },
+    {
+      "slug": "doctor-who",
+      "label": "doctor who",
+      "featured": false
+    },
+    {
+      "slug": "angel",
+      "label": "angel",
+      "featured": false
+    },
+    {
+      "slug": "kamigawa",
+      "label": "kamigawa",
+      "featured": false
+    },
+    {
+      "slug": "goblin",
+      "label": "goblin",
+      "featured": false
+    },
+    {
+      "slug": "mirrodin",
+      "label": "mirrodin",
+      "featured": false
+    },
+    {
+      "slug": "marvel-universe",
+      "label": "marvel (universe)",
+      "featured": false
+    },
+    {
+      "slug": "lorwyn-shadowmoor",
+      "label": "lorwyn/shadowmoor",
+      "featured": false
+    },
+    {
+      "slug": "bisexual",
+      "label": "bisexual",
+      "featured": false
+    }
+  ]
+}

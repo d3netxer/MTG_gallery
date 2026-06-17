@@ -1,0 +1,130 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = 'A gallery of every Magic: The Gathering artist.' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1019'/%3E%3Ctext x='16' y='24' font-size='22' text-anchor='middle' fill='%236fc8ee'%3E◆%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a href="/" class="brand">
+          <span class="brand-mark">◆</span>
+          <span class="brand-name">The Magic Gallery</span>
+        </a>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>Card data &amp; images via <a href="https://scryfall.com" rel="noopener">Scryfall</a>. An unofficial fan project — Magic: The Gathering is © Wizards of the Coast.</p>
+    </footer>
+
+    <style is:global>
+      :root {
+        /* Etherium — Breya's Esper artifice: polished silver-blue metal,
+           arcane glow, obsidian-indigo ground, a red transmuter's spark. */
+        --bg: #090b12;
+        --bg-2: #0d1019;
+        --panel: #161b26;
+        --panel-2: #1d2433;
+        --line: #36425a;           /* steel-blue */
+        --text: #e7edf4;           /* cool silver-white */
+        --muted: #8f9cb2;          /* tarnished steel */
+        --brass: #b9c6d6;          /* etherium silver (primary metal) */
+        --brass-bright: #eaf2fb;   /* polished highlight */
+        --copper: #455a93;         /* esper indigo (deep gradient end) */
+        --patina: #74b8d8;         /* etherium cyan readout */
+        --arcane: #6fc8ee;         /* arcane blue energy */
+        --spark: #d8533f;          /* Breya's transmuter spark */
+        --gold: var(--brass);       /* legacy alias used across pages */
+        /* Mana pips */
+        --W: #f5efd6; --U: #4a8fd6; --B: #9a7bb0; --R: #d65a4a; --G: #5aa969; --C: #b9bcc4;
+        --radius: 10px;
+        --display: 'Cinzel', ui-serif, Georgia, 'Times New Roman', serif;
+        --body: 'EB Garamond', ui-serif, Georgia, 'Times New Roman', serif;
+        --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family: var(--body);
+        font-size: 1.02rem;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        /* Layered ground: etherium glow + arcane underlight + schematic grid. */
+        background-color: var(--bg);
+        background-image:
+          radial-gradient(900px 460px at 50% -8%, rgba(140,176,214,0.10), transparent 70%),
+          radial-gradient(760px 520px at 88% 112%, rgba(111,200,238,0.07), transparent 70%),
+          linear-gradient(rgba(120,150,190,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(120,150,190,0.05) 1px, transparent 1px),
+          linear-gradient(180deg, var(--bg-2), var(--bg));
+        background-size: auto, auto, 34px 34px, 34px 34px, auto;
+        background-attachment: fixed;
+      }
+      a { color: inherit; }
+      main { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+      h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: 0.01em; }
+
+      /* Header — etherium nameplate. */
+      .site-header {
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgba(140,176,214,0.06), transparent),
+          rgba(9,11,18,0.6);
+        box-shadow: 0 1px 0 rgba(140,176,214,0.12);
+      }
+      .site-header-inner {
+        display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+        max-width: 1180px; margin: 0 auto; padding: 22px 20px 18px;
+      }
+      .brand {
+        font-family: var(--display); font-size: 1.45rem; font-weight: 700;
+        letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none;
+        color: var(--brass-bright); display: inline-flex; align-items: center; gap: 12px;
+        text-shadow: 0 1px 0 #000, 0 0 18px rgba(140,176,214,0.22);
+      }
+      .brand-mark { color: var(--arcane); text-shadow: 0 0 14px rgba(111,200,238,0.7); }
+      .brand-tag {
+        color: var(--muted); font-family: var(--mono); font-size: 0.72rem;
+        letter-spacing: 0.08em; text-transform: uppercase;
+      }
+      .site-footer {
+        max-width: 1180px; margin: 48px auto 0; padding: 22px 20px 30px;
+        color: var(--muted); font-size: 0.72rem; letter-spacing: 0.04em;
+        border-top: 1px solid var(--line); font-family: var(--mono);
+        position: relative;
+      }
+      .site-footer::before {
+        content: '◆'; position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+        color: var(--arcane); background: var(--bg); padding: 0 12px; font-size: 0.7rem;
+      }
+      .site-footer a { color: var(--arcane); }
+    </style>
+  </body>
+</html>

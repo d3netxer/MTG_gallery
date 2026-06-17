@@ -1,0 +1,236 @@
+---
+import Base from '../../../layouts/Base.astro';
+import GalleryView from '../../../components/GalleryView.astro';
+import { COLOR_NAMES } from '../../../lib/types';
+import type { ArtistDetail } from '../../../lib/types';
+
+export async function getStaticPaths() {
+  const files = import.meta.glob<{ default: ArtistDetail }>('../../../data/artists/*.json', {
+    eager: true,
+  });
+  return Object.values(files).map((mod) => {
+    const artist = mod.default;
+    return { params: { slug: artist.slug }, props: { artist } };
+  });
+}
+
+interface Props {
+  artist: ArtistDetail;
+}
+const { artist } = Astro.props;
+
+const baked = artist.bakedCards;
+const overflowCount = artist.overflowCount;
+const colorName = COLOR_NAMES[artist.dominantColor] ?? artist.dominantColor;
+const nfts = artist.nfts ?? [];
+const nftFloor = artist.nftFloorEth ?? null;
+const nftCollectionUrl = artist.nftCollection
+  ? `https://opensea.io/collection/${artist.nftCollection}`
+  : null;
+---
+
+<Base
+  title={`${artist.displayName} — The Magic Gallery`}
+  description={`Every Magic: The Gathering card illustrated by ${artist.displayName}.`}
+>
+  <a href="/" class="back">← All rooms</a>
+
+  <header class="artist-head">
+    <div>
+      <p class="kicker">Artist room</p>
+      <h1>{artist.displayName}</h1>
+      <p class="facts">
+        <span class="dot c-{artist.dominantColor}"></span>{colorName}
+        · {artist.primaryEra} · {artist.cardCount} artworks
+      </p>
+    </div>
+    {artist.hasNFTs && (
+      <div class="nft-card">
+        <span class="nft-label">◆ NFT artist</span>
+        <span class="nft-floor">
+          {nftFloor != null ? `${nftFloor} ETH floor` : 'No active floor'}
+        </span>
+        {artist.nftCollection && <span class="nft-note">collection: {artist.nftCollection}</span>}
+      </div>
+    )}
+  </header>
+
+  <div class="room-tools">
+    <GalleryView slides={baked} overflowUrl={overflowCount > 0 ? `/data/overflow/${artist.slug}.json` : null} title={artist.displayName} tileSelector=".card img" tileImageAttr="src" />
+  </div>
+
+  {artist.hasNFTs && (
+    <section class="nft-works">
+      <div class="nft-works-head">
+        <h2>◆ NFT works</h2>
+        {nftCollectionUrl && (
+          <a href={nftCollectionUrl} target="_blank" rel="noopener" class="see-all">
+            View on OpenSea ↗
+          </a>
+        )}
+      </div>
+      {nfts.length > 0 ? (
+        <div class="nft-grid">
+          {nfts.map((n) => (
+            <a class="nft" href={n.url} target="_blank" rel="noopener">
+              <img src={n.image} alt={n.name} loading="lazy" />
+              <span class="nft-name">{n.name}</span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="nft-empty">
+          This artist sells NFTs of their own art, but no active OpenSea listings
+          were found via the API. Their work may live on another platform
+          (Foundation, SuperRare). Add verified tokens to <code>curated-artists.json</code>.
+        </p>
+      )}
+    </section>
+  )}
+
+  <div class="card-grid">
+    {baked.map((c) => (
+      <figure class="card">
+        <img src={c.image} alt={c.name} loading="lazy" width="488" height="680" />
+        <figcaption>{c.name} <span>· {c.setCode} {c.year}</span></figcaption>
+      </figure>
+    ))}
+  </div>
+
+  {overflowCount > 0 && (
+    <>
+      <div id="overflow" class="card-grid"></div>
+      <div class="more-wrap">
+        <button id="load-more" class="load-more" data-slug={artist.slug}>
+          Load {overflowCount} more
+        </button>
+      </div>
+      <script>
+        const btn = document.getElementById('load-more');
+        btn?.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.textContent = 'Loading…';
+          try {
+            const res = await fetch(`/data/overflow/${btn.dataset.slug}.json`);
+            const data = await res.json();
+            document.getElementById('overflow').innerHTML = data
+              .map(
+                (c) => `
+                <figure class="card">
+                  <img src="${c.image}" alt="${c.name}" loading="lazy" width="488" height="680" />
+                  <figcaption>${c.name} <span>· ${c.setCode} ${c.year}</span></figcaption>
+                </figure>`
+              )
+              .join('');
+            btn.remove();
+          } catch {
+            btn.disabled = false;
+            btn.textContent = 'Retry — load more';
+          }
+        });
+      </script>
+    </>
+  )}
+
+  <style>
+    .back {
+      display: inline-block; margin: 8px 0 22px; color: var(--muted);
+      text-decoration: none; font-family: var(--mono); font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .back:hover { color: var(--brass); }
+    .artist-head {
+      display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
+      flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 22px; margin-bottom: 22px;
+    }
+    .room-tools { display: flex; justify-content: flex-end; margin: 0 0 24px; }
+    .kicker {
+      margin: 0 0 6px; color: var(--patina); font-family: var(--mono); font-size: 0.68rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+    }
+    .artist-head h1 {
+      margin: 0 0 10px; font-size: clamp(2rem, 4.5vw, 3rem);
+      color: var(--brass-bright); text-shadow: 0 1px 0 #000, 0 0 26px rgba(140,176,214,0.18);
+    }
+    .facts {
+      margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.74rem;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 1px rgba(0,0,0,0.5) inset; }
+    .c-W { background: var(--W); } .c-U { background: var(--U); } .c-B { background: var(--B); }
+    .c-R { background: var(--R); } .c-G { background: var(--G); } .c-C { background: var(--C); }
+    .nft-card {
+      display: flex; flex-direction: column; gap: 3px; text-align: right;
+      background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--arcane); border-radius: var(--radius);
+      padding: 12px 18px; box-shadow: 0 0 22px rgba(111,200,238,0.12), inset 0 1px 0 rgba(200,228,245,0.12);
+    }
+    .nft-label { color: var(--arcane); font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .nft-floor { font-family: var(--display); font-size: 1.3rem; color: var(--brass-bright); }
+    .nft-note { color: var(--muted); font-family: var(--mono); font-size: 0.64rem; font-style: italic; }
+
+    .nft-works {
+      background: linear-gradient(180deg, rgba(111,200,238,0.07), transparent);
+      border: 1px solid var(--arcane); border-radius: var(--radius);
+      padding: 20px 22px; margin-bottom: 30px; box-shadow: inset 0 0 30px rgba(111,200,238,0.05);
+    }
+    .nft-works-head {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .nft-works-head h2 { margin: 0; font-size: 1.2rem; color: var(--arcane); letter-spacing: 0.04em; }
+    .see-all {
+      font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--arcane); text-decoration: none;
+    }
+    .see-all:hover { text-decoration: underline; }
+    .nft-grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+    .nft { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; }
+    .nft img {
+      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;
+      background: var(--panel-2); border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .nft:hover img { transform: translateY(-3px); border-color: var(--arcane); }
+    .nft-name { font-size: 0.84rem; line-height: 1.3; }
+    .nft-empty {
+      color: var(--muted); font-size: 0.9rem; margin: 0; line-height: 1.5;
+    }
+    .nft-empty code { color: var(--arcane); font-family: var(--mono); font-size: 0.85em; }
+
+    .card-grid {
+      display: grid; gap: 18px;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+    .card { margin: 0; }
+    .card img {
+      cursor: pointer;
+      width: 100%; height: auto; border-radius: 8px; display: block;
+      background: var(--panel-2); border: 1px solid var(--line);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.08), 0 6px 18px rgba(0,0,0,0.5);
+      transition: transform 0.16s, border-color 0.16s, box-shadow 0.16s;
+    }
+    .card:hover img {
+      transform: translateY(-3px); border-color: var(--brass);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.3), 0 0 24px rgba(79,180,230,0.12);
+    }
+    .card figcaption {
+      margin-top: 9px; font-size: 0.82rem; font-family: var(--mono); letter-spacing: 0.02em; color: var(--text);
+    }
+    .card figcaption span { color: var(--muted); }
+    .more-wrap { text-align: center; margin: 32px 0 4px; }
+    .load-more {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--brass); color: var(--brass-bright);
+      padding: 11px 28px; border-radius: 6px; cursor: pointer; font-size: 0.74rem;
+      font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.12em;
+      box-shadow: inset 0 1px 0 rgba(200,228,245,0.2); transition: all 0.15s;
+    }
+    .load-more:hover { background: linear-gradient(180deg, var(--brass), var(--copper)); color: #08111c; border-color: var(--brass-bright); }
+    @media (max-width: 600px) {
+      .card-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+  </style>
+</Base>

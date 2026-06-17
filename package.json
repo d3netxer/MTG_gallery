@@ -1,0 +1,25 @@
+{
+  "name": "mtg-artist-index",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "build:sample": "node scripts/build-sample.mjs",
+    "build:data": "node --max-old-space-size=2048 scripts/build-data.ts",
+    "build:nfts": "node --env-file=.env scripts/build-nfts.mjs",
+    "build:videos": "node --env-file=.env scripts/build-videos.mjs",
+    "build:vibe": "node --env-file=.env scripts/build-vibe.mjs",
+    "build:bakeoff": "node --env-file=.env scripts/build-bakeoff.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "astro": "^4.16.0",
+    "stream-json": "^1.8.0"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0"
+  }
+}

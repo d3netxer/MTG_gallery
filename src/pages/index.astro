@@ -1,0 +1,81 @@
+---
+import Base from '../layouts/Base.astro';
+import GalleryView from '../components/GalleryView.astro';
+import curated from '../data/bakeoff.json';
+
+interface CuratedEntry {
+  card: string;
+  set: string;
+  model: string;
+  clip: string;
+  image: string;
+  usedText: boolean;
+}
+const list = curated as CuratedEntry[];
+// Slides for the full-screen reel; each carries its own pre-baked clip.
+const slides = list.map((e) => ({ image: e.image, name: e.card, setCode: e.set, year: '', artists: [], clip: e.clip }));
+---
+
+<Base title="The Magic Gallery — Magic art, alive" description="A curated gallery of Magic: The Gathering art, animated.">
+  <section class="liv-hero">
+    <h1>Magic, alive.</h1>
+    <p class="sub">
+      A curated gallery of Magic: The Gathering art — animated, one piece at a time.
+      {list.length} works, each brought to motion.
+    </p>
+    <div class="liv-actions">
+      <GalleryView slides={slides} title="The Magic Gallery" tileSelector=".liv-card" tileImageAttr="data-img" buttonLabel="▶ Play the gallery" />
+      <a class="liv-browse" href="/browse">Browse the full archive →</a>
+    </div>
+  </section>
+
+  <div class="liv-wall">
+    {list.map((e) => (
+      <figure class="liv-card" data-img={e.image}>
+        <video class="liv-vid" src={e.clip} poster={e.image} autoplay loop muted playsinline preload="metadata"></video>
+        <figcaption>
+          <span class="liv-name">{e.card}</span>
+          <span class="liv-set">{e.set}</span>
+        </figcaption>
+      </figure>
+    ))}
+  </div>
+
+  <style>
+    .liv-hero { text-align: center; padding: 40px 0 26px; }
+    .liv-hero h1 {
+      font-size: clamp(2.2rem, 6vw, 3.6rem); margin: 0 0 14px; letter-spacing: 0.05em;
+      color: var(--brass-bright); text-shadow: 0 1px 0 #000, 0 0 34px rgba(111,200,238,0.3);
+    }
+    .liv-hero .sub { color: var(--muted); max-width: 620px; margin: 0 auto 22px; font-size: 1.1rem; line-height: 1.5; }
+    .liv-actions { display: flex; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .liv-browse {
+      font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); text-decoration: none;
+    }
+    .liv-browse:hover { color: var(--brass); }
+
+    .liv-wall {
+      display: grid; gap: 20px; margin-top: 30px;
+      grid-template-columns: repeat(auto-fill, minmax(244px, 1fr));
+    }
+    .liv-card { margin: 0; cursor: pointer; }
+    .liv-vid {
+      width: 100%; aspect-ratio: 488 / 680; object-fit: contain; background: var(--panel-2);
+      border-radius: 10px; border: 1px solid var(--line);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.10), 0 6px 18px rgba(0,0,0,0.5);
+      transition: transform 0.16s, border-color 0.16s, box-shadow 0.16s;
+    }
+    .liv-card:hover .liv-vid {
+      transform: translateY(-4px); border-color: var(--brass);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.3), 0 0 26px rgba(79,180,230,0.16);
+    }
+    .liv-card figcaption { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+    .liv-name { font-size: 0.95rem; color: var(--text); }
+    .liv-set { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--patina); }
+
+    @media (max-width: 600px) {
+      .liv-wall { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+  </style>
+</Base>

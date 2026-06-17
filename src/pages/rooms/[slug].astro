@@ -1,0 +1,280 @@
+---
+import Base from '../../layouts/Base.astro';
+import GalleryView from '../../components/GalleryView.astro';
+import type { RoomArtwork } from '../../lib/room-art';
+
+interface RoomFile {
+  slug: string;
+  label: string;
+  featured: boolean;
+  count: number;
+  baked: RoomArtwork[];
+  overflowCount: number;
+}
+
+export async function getStaticPaths() {
+  const files = import.meta.glob<{ default: RoomFile }>('../../data/rooms/*.json', { eager: true });
+  return Object.values(files).map((mod) => ({ params: { slug: mod.default.slug }, props: { room: mod.default } }));
+}
+
+const { room } = Astro.props as { room: RoomFile };
+---
+
+<Base
+  title={`${room.label} — The Magic Gallery`}
+  description={`Magic: The Gathering art in the ${room.label} room — ${room.count} works.`}
+>
+  <a href="/" class="back">← All rooms</a>
+
+  <header class="room-head">
+    <p class="kicker">Theme room</p>
+    <h1>{room.label}</h1>
+    <p class="facts">{room.count.toLocaleString()} {room.count === 1 ? 'artwork' : 'artworks'}</p>
+  </header>
+
+  {room.count === 0 ? (
+    <p class="empty">This room has no artworks in the current build. It stays published to keep its URL stable.</p>
+  ) : (
+    <>
+      <div class="room-tools">
+        <GalleryView slides={room.baked} overflowUrl={room.overflowCount > 0 ? `/data/room-overflow/${room.slug}.json` : null} title={room.label} tileSelector=".art-img" tileImageAttr="data-img" />
+      </div>
+
+      <div class="vibe-bar">
+        <span class="vibe-eyebrow">◑ Vibe</span>
+        <input id="vibe-input" type="text" placeholder="Describe a vibe… (e.g. neon cyberpunk)" autocomplete="off" />
+        <button id="vibe-apply" class="vibe-btn" type="button">Apply</button>
+        <button id="vibe-reset" class="vibe-btn ghost" type="button" hidden>Reset</button>
+        <span id="vibe-chips" class="vibe-chips"></span>
+        <span id="vibe-status" class="vibe-status"></span>
+      </div>
+
+      <div class="art-grid">
+        {room.baked.map((art) => (
+          <figure class="art">
+            <div class="art-img" data-img={art.image} style={`background-image:url('${art.image}')`}></div>
+            <figcaption>
+              <span class="art-name">{art.name} <span class="set">· {art.setCode} {art.year}</span></span>
+              <span class="art-by">
+                {art.artists.length === 0 ? (
+                  'Unknown'
+                ) : (
+                  art.artists.map((a, i) => (
+                    <>{i > 0 ? ' & ' : ''}<a href={`/rooms/artist/${a.slug}/`}>{a.name}</a></>
+                  ))
+                )}
+              </span>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+
+      {room.overflowCount > 0 && (
+        <>
+          <div id="overflow" class="art-grid"></div>
+          <div class="more-wrap">
+            <button id="load-more" class="load-more" data-slug={room.slug}>
+              Load {room.overflowCount.toLocaleString()} more
+            </button>
+          </div>
+          <script>
+            const btn = document.getElementById('load-more');
+            btn?.addEventListener('click', async () => {
+              btn.disabled = true;
+              btn.textContent = 'Loading…';
+              try {
+                const res = await fetch(`/data/room-overflow/${btn.dataset.slug}.json`);
+                const data = await res.json();
+                document.getElementById('overflow').innerHTML = data
+                  .map((art) => {
+                    const by = art.artists.length
+                      ? art.artists.map((a) => `<a href="/rooms/artist/${a.slug}/">${a.name}</a>`).join(' & ')
+                      : 'Unknown';
+                    return `
+                      <figure class="art">
+                        <div class="art-img" data-img="${art.image}" style="background-image:url('${art.image}')"></div>
+                        <figcaption>
+                          <span class="art-name">${art.name} <span class="set">· ${art.setCode} ${art.year}</span></span>
+                          <span class="art-by">${by}</span>
+                        </figcaption>
+                      </figure>`;
+                  })
+                  .join('');
+                window.__applyCurrentVibe?.(); // restyle newly-added tiles if a vibe is active
+                btn.remove();
+              } catch {
+                btn.disabled = false;
+                btn.textContent = 'Retry — load more';
+              }
+            });
+          </script>
+        </>
+      )}
+
+      <script>
+        const input = document.getElementById('vibe-input');
+        const applyBtn = document.getElementById('vibe-apply');
+        const resetBtn = document.getElementById('vibe-reset');
+        const chipsEl = document.getElementById('vibe-chips');
+        const statusEl = document.getElementById('vibe-status');
+        let manifest = null;
+        let current = null;
+
+        const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const tiles = () => document.querySelectorAll('.art-img[data-img]');
+
+        async function getManifest() {
+          if (manifest) return manifest;
+          try { const r = await fetch('/data/vibe-manifest.json'); manifest = r.ok ? await r.json() : {}; }
+          catch { manifest = {}; }
+          return manifest;
+        }
+
+        function applyToTile(t, slug) {
+          const v = manifest[slug];
+          const variant = v && v.images[t.dataset.img];
+          if (!variant) return false;
+          if (!t.dataset.orig) t.dataset.orig = t.style.backgroundImage;
+          t.style.backgroundImage = `url('${variant}')`;
+          t.classList.add('vibed');
+          return true;
+        }
+
+        function apply(slug) {
+          const v = manifest[slug];
+          if (!v) { statusEl.textContent = `No “${slug}” vibe generated yet — run npm run build:vibe.`; return; }
+          let n = 0;
+          tiles().forEach((t) => { if (applyToTile(t, slug)) n++; });
+          current = slug;
+          window.__activeVibe = { slug, label: v.label, images: v.images }; // shared with the gallery
+          resetBtn.hidden = false;
+          statusEl.textContent = `“${v.label}” · ${n} of ${tiles().length} cards reimagined`;
+          [...chipsEl.children].forEach((c) => c.classList.toggle('active', c.dataset.slug === slug));
+        }
+
+        function reset() {
+          tiles().forEach((t) => { if (t.dataset.orig) { t.style.backgroundImage = t.dataset.orig; t.classList.remove('vibed'); } });
+          current = null;
+          window.__activeVibe = null;
+          resetBtn.hidden = true;
+          statusEl.textContent = '';
+          [...chipsEl.children].forEach((c) => c.classList.remove('active'));
+        }
+
+        // Re-style tiles added later by "Load more".
+        window.__applyCurrentVibe = () => { if (current) tiles().forEach((t) => { if (!t.classList.contains('vibed')) applyToTile(t, current); }); };
+
+        applyBtn.addEventListener('click', async () => { const s = slugify(input.value); if (!s) return; await getManifest(); apply(s); });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyBtn.click(); });
+        resetBtn.addEventListener('click', reset);
+
+        // Mirror in-gallery vibe switches back onto the room grid + bar.
+        window.addEventListener('gallery-vibe', async (e) => {
+          await getManifest();
+          const s = e.detail.slug;
+          if (s) { input.value = manifest[s]?.label ?? s; apply(s); } else reset();
+        });
+
+        getManifest().then((m) => {
+          const imgs = new Set([...tiles()].map((t) => t.dataset.img));
+          const slugs = Object.keys(m).filter((s) => Object.keys(m[s].images).some((u) => imgs.has(u)));
+          if (!slugs.length) return;
+          chipsEl.innerHTML = slugs.map((s) => `<button class="vibe-chip" type="button" data-slug="${s}">${m[s].label}</button>`).join('');
+          chipsEl.querySelectorAll('.vibe-chip').forEach((c) => c.addEventListener('click', () => { input.value = m[c.dataset.slug].label; apply(c.dataset.slug); }));
+        });
+      </script>
+    </>
+  )}
+
+  <style>
+    .back {
+      display: inline-block; margin: 8px 0 22px; color: var(--muted);
+      text-decoration: none; font-family: var(--mono); font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .back:hover { color: var(--brass); }
+    .room-head {
+      border-bottom: 1px solid var(--line); padding-bottom: 22px; margin-bottom: 28px;
+    }
+    .kicker {
+      margin: 0 0 6px; color: var(--patina); font-family: var(--mono); font-size: 0.68rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+    }
+    .room-head h1 {
+      margin: 0 0 10px; font-size: clamp(2rem, 4.5vw, 3rem); text-transform: capitalize;
+      color: var(--brass-bright); text-shadow: 0 1px 0 #000, 0 0 26px rgba(140,176,214,0.18);
+    }
+    .facts {
+      margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.74rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .empty { text-align: center; color: var(--muted); padding: 40px 0; font-style: italic; }
+    .room-tools { display: flex; justify-content: flex-end; margin: -8px 0 16px; }
+
+    .vibe-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      margin: 0 0 24px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px;
+      background: linear-gradient(180deg, rgba(111,200,238,0.05), transparent);
+    }
+    .vibe-eyebrow { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--patina); }
+    #vibe-input {
+      flex: 1; min-width: 200px; background: var(--panel); border: 1px solid var(--line); color: var(--text);
+      padding: 8px 12px; border-radius: 6px; font-family: var(--body); font-size: 0.95rem; outline: none;
+    }
+    #vibe-input:focus { border-color: var(--arcane); box-shadow: 0 0 0 2px rgba(111,200,238,0.15); }
+    .vibe-btn {
+      cursor: pointer; font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 9px 16px; border-radius: 6px; border: 1px solid var(--arcane); color: #08111c;
+      background: linear-gradient(180deg, var(--arcane), #2f8fc0);
+    }
+    .vibe-btn.ghost { background: var(--panel-2); color: var(--muted); border-color: var(--line); }
+    .vibe-btn:hover { filter: brightness(1.08); }
+    .vibe-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .vibe-chip {
+      cursor: pointer; font-family: var(--mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+    }
+    .vibe-chip:hover, .vibe-chip.active { border-color: var(--arcane); color: var(--arcane); }
+    .vibe-status { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); width: 100%; }
+    .art-img.vibed { border-color: var(--arcane); box-shadow: inset 0 0 0 1px rgba(111,200,238,0.4), 0 0 22px rgba(111,200,238,0.18); }
+
+    .art-grid {
+      display: grid; gap: 18px;
+      grid-template-columns: repeat(auto-fill, minmax(244px, 1fr));
+    }
+    .art { margin: 0; }
+    .art-img {
+      cursor: pointer;
+      aspect-ratio: 488 / 680; background-size: contain; background-repeat: no-repeat; background-position: center;
+      border-radius: 10px; background-color: var(--panel-2);
+      border: 1px solid var(--line);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.10), 0 6px 18px rgba(0,0,0,0.5);
+      transition: transform 0.16s, border-color 0.16s, box-shadow 0.16s;
+    }
+    .art:hover .art-img {
+      transform: translateY(-3px); border-color: var(--brass);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.30), 0 0 24px rgba(79,180,230,0.12);
+    }
+    .art figcaption {
+      margin-top: 10px; display: flex; flex-direction: column; gap: 3px;
+    }
+    .art-name { font-size: 0.92rem; color: var(--text); }
+    .art-name .set { color: var(--muted); font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.03em; }
+    .art-by { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); letter-spacing: 0.03em; }
+    .art-by a { color: var(--brass); text-decoration: none; }
+    .art-by a:hover { color: var(--brass-bright); text-decoration: underline; }
+
+    .more-wrap { text-align: center; margin: 32px 0 4px; }
+    .load-more {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--brass); color: var(--brass-bright);
+      padding: 11px 28px; border-radius: 6px; cursor: pointer; font-size: 0.74rem;
+      font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.12em;
+      box-shadow: inset 0 1px 0 rgba(200,228,245,0.2); transition: all 0.15s;
+    }
+    .load-more:hover { background: linear-gradient(180deg, var(--brass), var(--copper)); color: #08111c; border-color: var(--brass-bright); }
+
+    @media (max-width: 600px) {
+      .art-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+  </style>
+</Base>

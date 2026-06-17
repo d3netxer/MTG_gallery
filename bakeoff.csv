@@ -1,0 +1,19 @@
+Card,Set,Set Code,Model,Input,Est Cost (USD per clip)
+Ancestral Recall,Unlimited Edition,2ED,bytedance/seedance-1-lite,text + image,0.18
+Demonic Tutor,Commander Masters,CMM,pixverse/pixverse-v4.5,text + image,0.45
+Force of Will,Alliances,ALL,bytedance/seedance-1-lite,text + image,0.18
+Wrath of God,Dominaria Remastered,DMR,bytedance/seedance-1-lite,text + image,0.18
+Birds of Paradise,Marvel Super Heroes Commander,MSC,minimax/video-01-live,text + image,0.50
+Counterspell,Duskmourn: House of Horror Commander,DSC,leonardoai/motion-2.0,text + image,0.30
+Lightning Bolt,Ravnica: Clue Edition,CLU,bytedance/seedance-1-lite,text + image,0.18
+Vampiric Tutor,Visions,VIS,bytedance/seedance-1-lite,text + image,0.18
+Dark Ritual,Masters Edition IV,ME4,bytedance/seedance-1-lite,text + image,0.18
+Serra Angel,Fourth Edition,4ED,bytedance/seedance-1-lite,text + image,0.18
+"Emrakul, the Aeons Torn",Ultimate Masters,UMA,bytedance/seedance-1-lite,text + image,0.18
+Wolf Pack,Masters Edition II,ME2,bytedance/seedance-1-lite,text + image,0.18
+"Vorinclex, Monstrous Raider",Kaldheim,KHM,bytedance/seedance-1-pro,text + image,0.50
+"Niv-Mizzet, Parun",Outlaws of Thunder Junction Commander,OTC,minimax/hailuo-02,text + image,0.30
+"Ulamog, the Ceaseless Hunger",Commander Masters,CMM,bytedance/seedance-1-lite,text + image,0.18
+"Garruk, Cursed Huntsman",Throne of Eldraine,ELD,bytedance/seedance-1-lite,text + image,0.18
+Chandra Ablaze,Zendikar,ZEN,bytedance/seedance-1-lite,text + image,0.18
+Total,,,,,4.21
