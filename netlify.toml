@@ -7,4 +7,6 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  # Node 22.18+ runs scripts/build-data.ts directly (native TypeScript stripping).
+  # Node 20 cannot, and fails with ERR_UNKNOWN_FILE_EXTENSION ".ts".
+  NODE_VERSION = "22"
