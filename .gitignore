@@ -15,8 +15,8 @@ public/data/video/
 public/data/video-manifest.json
 public/data/vibe/
 public/data/vibe-manifest.json
-public/data/bakeoff/
-src/data/bakeoff.json
+# Note: the bake-off clips + manifest ARE committed — they're the living-gallery
+# content and can't be regenerated in CI (need a paid Replicate token).
 public/data/overflow/
 public/data/room-overflow/
 curation-report.md

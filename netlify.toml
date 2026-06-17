@@ -1,0 +1,10 @@
+# Card data is gitignored and regenerated from Scryfall's public bulk export at
+# build time (build:data needs no secrets). The bake-off clips that the living
+# gallery plays are committed (they need a paid Replicate token to make, so they
+# can't be regenerated in CI).
+[build]
+  command = "npm run build:data && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

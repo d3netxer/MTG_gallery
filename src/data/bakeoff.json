@@ -1,0 +1,138 @@
+[
+  {
+    "card": "Ancestral Recall",
+    "set": "Unlimited Edition",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/ancestral-recall.mp4",
+    "image": "https://cards.scryfall.io/normal/front/2/d/2dd41293-d7c8-4422-9f0c-b3e96350f5c9.jpg?1559592144",
+    "usedText": true
+  },
+  {
+    "card": "Demonic Tutor",
+    "model": "pixverse/pixverse-v4.5",
+    "clip": "/data/bakeoff/demonic-tutor.mp4",
+    "image": "https://cards.scryfall.io/normal/front/a/2/a24b4cb6-cebb-428b-8654-74347a6a8d63.jpg?1763472867",
+    "usedText": true,
+    "set": "Commander Masters"
+  },
+  {
+    "card": "Force of Will",
+    "set": "Alliances",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/force-of-will.mp4",
+    "image": "https://cards.scryfall.io/normal/front/9/a/9a879b60-4381-447d-8a5a-8e0b6a1d49ca.jpg?1562769672",
+    "usedText": true
+  },
+  {
+    "card": "Wrath of God",
+    "set": "Dominaria Remastered",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/wrath-of-god.mp4",
+    "image": "https://cards.scryfall.io/normal/front/c/3/c3700519-b74c-4445-b42e-03690b8d4463.jpg?1675199137",
+    "usedText": true
+  },
+  {
+    "card": "Birds of Paradise",
+    "model": "minimax/video-01-live",
+    "clip": "/data/bakeoff/birds-of-paradise.mp4",
+    "image": "https://cards.scryfall.io/normal/front/4/9/492c2f9a-51e7-4e0f-9899-23bf43ea988b.jpg?1781183799",
+    "usedText": true,
+    "set": "Marvel Super Heroes Commander"
+  },
+  {
+    "card": "Counterspell",
+    "model": "leonardoai/motion-2.0",
+    "clip": "/data/bakeoff/counterspell.mp4",
+    "image": "https://cards.scryfall.io/normal/front/4/f/4f616706-ec97-4923-bb1e-11a69fbaa1f8.jpg?1751282477",
+    "usedText": true,
+    "set": "Duskmourn: House of Horror Commander"
+  },
+  {
+    "card": "Lightning Bolt",
+    "set": "Ravnica: Clue Edition",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/lightning-bolt.mp4",
+    "image": "https://cards.scryfall.io/normal/front/7/7/77c6fa74-5543-42ac-9ead-0e890b188e99.jpg?1706239968",
+    "usedText": true
+  },
+  {
+    "card": "Vampiric Tutor",
+    "set": "Visions",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/vampiric-tutor.mp4",
+    "image": "https://cards.scryfall.io/normal/front/0/a/0a07cba3-2e8d-48ec-a6f8-4d2edfcd833d.jpg?1562276960",
+    "usedText": true
+  },
+  {
+    "card": "Dark Ritual",
+    "set": "Masters Edition IV",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/dark-ritual.mp4",
+    "image": "https://cards.scryfall.io/normal/front/c/7/c72d2bb0-471a-4b4d-9ae3-9de4699c9ef3.jpg?1562942047",
+    "usedText": true
+  },
+  {
+    "card": "Serra Angel",
+    "set": "Fourth Edition",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/serra-angel.mp4",
+    "image": "https://cards.scryfall.io/normal/front/8/0/8072d00a-82ff-4406-bdf8-1af20cd3a170.jpg?1559604164",
+    "usedText": true
+  },
+  {
+    "card": "Emrakul, the Aeons Torn",
+    "set": "Ultimate Masters",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/emrakul-the-aeons-torn.mp4",
+    "image": "https://cards.scryfall.io/normal/front/0/e/0e0d989d-7186-40dc-bdfe-cfbb77656bc8.jpg?1612809706",
+    "usedText": true
+  },
+  {
+    "card": "Wolf Pack",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/wolf-pack.mp4",
+    "image": "https://cards.scryfall.io/normal/front/3/3/33018e52-1de5-4185-bceb-882163cce577.jpg?1758104160",
+    "usedText": true,
+    "set": "Masters Edition II"
+  },
+  {
+    "card": "Vorinclex, Monstrous Raider",
+    "model": "bytedance/seedance-1-pro",
+    "clip": "/data/bakeoff/vorinclex-monstrous-raider.mp4",
+    "image": "https://cards.scryfall.io/normal/front/9/2/92613468-205e-488b-930d-11908477e9f8.jpg?1631051073",
+    "usedText": true,
+    "set": "Kaldheim"
+  },
+  {
+    "card": "Niv-Mizzet, Parun",
+    "model": "minimax/hailuo-02",
+    "clip": "/data/bakeoff/niv-mizzet-parun.mp4",
+    "image": "https://cards.scryfall.io/normal/front/8/6/86c5c337-d25f-4c3e-9762-09ed0c2d36d7.jpg?1780482018",
+    "usedText": true,
+    "set": "Outlaws of Thunder Junction Commander"
+  },
+  {
+    "card": "Ulamog, the Ceaseless Hunger",
+    "set": "Commander Masters",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/ulamog-the-ceaseless-hunger.mp4",
+    "image": "https://cards.scryfall.io/normal/front/c/7/c74ae706-b3b3-4097-a387-6f6c38a9b603.jpg?1689995438",
+    "usedText": true
+  },
+  {
+    "card": "Garruk, Cursed Huntsman",
+    "set": "Throne of Eldraine",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/garruk-cursed-huntsman.mp4",
+    "image": "https://cards.scryfall.io/normal/front/a/b/abef512f-8f1d-4257-b16f-c0eed58670ec.jpg?1572490758",
+    "usedText": true
+  },
+  {
+    "card": "Chandra Ablaze",
+    "set": "Zendikar",
+    "model": "bytedance/seedance-1-lite",
+    "clip": "/data/bakeoff/chandra-ablaze.mp4",
+    "image": "https://cards.scryfall.io/normal/front/4/3/43da8995-77da-4ec4-94a5-5e7932a3c969.jpg?1562611728",
+    "usedText": true
+  }
+]
