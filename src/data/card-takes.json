@@ -1,0 +1,97 @@
+{
+  "chandra-ablaze": {
+    "card": "Chandra Ablaze",
+    "set": "Zendikar",
+    "image": "https://cards.scryfall.io/normal/front/4/3/43da8995-77da-4ec4-94a5-5e7932a3c969.jpg?1562611728",
+    "takes": [
+      {
+        "model": "bytedance/seedance-1-lite",
+        "clip": "/data/bakeoff/chandra-ablaze.mp4",
+        "promptKind": "auto",
+        "prompt": "Auto-generated from the full card image plus the card's name and rules text, with a \"subtle, faithful cinematic motion\" instruction."
+      },
+      {
+        "model": "bytedance/seedance-1-pro",
+        "clip": "/data/bakeoff/chandra-ablaze-fireball.mp4",
+        "promptKind": "custom",
+        "prompt": "Animate only the illustration. Chandra ignites — flames climb her arms and her hair turns to living fire, embers swirling; she winds back and hurls a roaring fireball toward the viewer, sparks trailing. Keep her character, composition, and outfit fully intact; animate motion, fire, and light only."
+      }
+    ]
+  },
+  "garruk-cursed-huntsman": {
+    "card": "Garruk, Cursed Huntsman",
+    "set": "Throne of Eldraine",
+    "image": "https://cards.scryfall.io/normal/front/a/b/abef512f-8f1d-4257-b16f-c0eed58670ec.jpg?1572490758",
+    "takes": [
+      {
+        "model": "bytedance/seedance-1-lite",
+        "clip": "/data/bakeoff/garruk-cursed-huntsman.mp4",
+        "promptKind": "auto",
+        "prompt": "Auto-generated from the full card image plus the card's name and rules text, with a \"subtle, faithful cinematic motion\" instruction."
+      },
+      {
+        "model": "bytedance/seedance-1-pro",
+        "clip": "/data/bakeoff/garruk-cursed-huntsman-hunt.mp4",
+        "promptKind": "custom",
+        "prompt": "Animate only the illustration. A massive Woodwurm bursts up from the ground; Garruk's two wolves launch forward and slam into it, ramming it back in a burst of dust and splinters; then Garruk leaps and swings his great axe down in a powerful overhead strike. Keep Garruk, the wolves, and the composition intact; animate motion and impact only."
+      }
+    ]
+  },
+  "serra-angel": {
+    "card": "Serra Angel",
+    "set": "Fourth Edition",
+    "image": "https://cards.scryfall.io/normal/front/8/0/8072d00a-82ff-4406-bdf8-1af20cd3a170.jpg?1559604164",
+    "takes": [
+      {
+        "model": "bytedance/seedance-1-lite",
+        "clip": "/data/bakeoff/serra-angel.mp4",
+        "promptKind": "auto",
+        "prompt": "Auto-generated from the full card image plus the card's name and rules text, with a \"subtle, faithful cinematic motion\" instruction."
+      },
+      {
+        "model": "bytedance/seedance-1-pro",
+        "clip": "/data/bakeoff/serra-angel-spin.mp4",
+        "promptKind": "custom",
+        "prompt": "Animate only the illustration. Serra Angel hovers with slow wingbeats, then spins gracefully in place as light and loose feathers drift around her; the camera slowly pushes in toward her upper body and face. Keep her character, armor, wings, and composition intact; animate flight, the spin, and the camera move only."
+      }
+    ]
+  },
+  "emrakul-the-aeons-torn": {
+    "card": "Emrakul, the Aeons Torn",
+    "set": "Ultimate Masters",
+    "image": "https://cards.scryfall.io/normal/front/0/e/0e0d989d-7186-40dc-bdfe-cfbb77656bc8.jpg?1612809706",
+    "takes": [
+      {
+        "model": "bytedance/seedance-1-lite",
+        "clip": "/data/bakeoff/emrakul-the-aeons-torn.mp4",
+        "promptKind": "auto",
+        "prompt": "Auto-generated from the full card image plus the card's name and rules text, with a \"subtle, faithful cinematic motion\" instruction."
+      },
+      {
+        "model": "bytedance/seedance-1-pro",
+        "clip": "/data/bakeoff/emrakul-the-aeons-torn-molt.mp4",
+        "promptKind": "custom",
+        "prompt": "Animate only the illustration. The creature's core lights up with eerie otherworldly energy as it begins to molt; its massive tentacles shed and slough off, pieces breaking away and drifting downward. Keep the creature's form and composition intact; animate the core glow, the molting, and the shedding/falling only."
+      }
+    ]
+  },
+  "wrath-of-god": {
+    "card": "Wrath of God",
+    "set": "Dominaria Remastered",
+    "image": "https://cards.scryfall.io/normal/front/c/3/c3700519-b74c-4445-b42e-03690b8d4463.jpg?1675199137",
+    "takes": [
+      {
+        "model": "bytedance/seedance-1-lite",
+        "clip": "/data/bakeoff/wrath-of-god.mp4",
+        "promptKind": "auto",
+        "prompt": "Auto-generated from the full card image plus the card's name and rules text, with a \"subtle, faithful cinematic motion\" instruction."
+      },
+      {
+        "model": "bytedance/seedance-1-pro",
+        "clip": "/data/bakeoff/wrath-of-god-aftermath.mp4",
+        "promptKind": "custom",
+        "prompt": "Animate only the illustration. The camera pulls back and rises into a high bird's-eye view, revealing a wider battlefield of destruction below: more fallen creatures crumbling to drifting ash across scorched ground, with smoke and embers rising. Keep the art's style, palette, and lighting consistent as the view widens; animate the camera pull-back, the crumbling-to-ash, smoke, and embers only."
+      }
+    ]
+  }
+}

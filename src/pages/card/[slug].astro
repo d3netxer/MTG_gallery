@@ -1,0 +1,90 @@
+---
+import Base from '../../layouts/Base.astro';
+import takesData from '../../data/card-takes.json';
+
+interface Take { model: string; clip: string; prompt: string; promptKind: string; }
+interface CardTakes { card: string; set: string; image: string; takes: Take[] }
+
+export async function getStaticPaths() {
+  return Object.entries(takesData as Record<string, CardTakes>).map(([slug, data]) => ({ params: { slug }, props: { data } }));
+}
+const { data } = Astro.props as { data: CardTakes };
+---
+
+<Base title={`${data.card} — takes — The Magic Gallery`} description={`Competing AI animations of ${data.card}.`}>
+  <a href="/" class="back">← Home</a>
+
+  <header class="ct-head">
+    <p class="kicker">{data.takes.length} competing takes</p>
+    <h1>{data.card}</h1>
+    <p class="facts">{data.set}</p>
+  </header>
+
+  <div class="ct-layout">
+    <figure class="ct-original">
+      <img src={data.image} alt={data.card} loading="lazy" />
+      <figcaption>The original card</figcaption>
+    </figure>
+
+    <div class="ct-takes">
+      {data.takes.map((t, i) => (
+        <figure class="ct-take">
+          <video class="ct-vid" src={t.clip} autoplay loop muted playsinline preload="metadata"></video>
+          <figcaption>
+            <span class="ct-row"><span class="ct-num">Take {i + 1}</span><span class="ct-model">{t.model}</span></span>
+            <span class="ct-prompt">
+              <span class={`ct-plabel ${t.promptKind}`}>{t.promptKind === 'custom' ? 'custom prompt' : 'auto prompt'}</span>
+              {t.prompt}
+            </span>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  </div>
+
+  <p class="ct-note">Rankings (an AI-judge panel) are coming. For now: the competing takes, with the model and prompt behind each.</p>
+
+  <style>
+    .back {
+      display: inline-block; margin: 8px 0 22px; color: var(--muted);
+      text-decoration: none; font-family: var(--mono); font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .back:hover { color: var(--brass); }
+    .ct-head { border-bottom: 1px solid var(--line); padding-bottom: 22px; margin-bottom: 28px; }
+    .kicker { margin: 0 0 6px; color: var(--patina); font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; }
+    .ct-head h1 { margin: 0 0 10px; font-size: clamp(2rem, 4.5vw, 3rem); color: var(--brass-bright); text-shadow: 0 1px 0 #000, 0 0 26px rgba(140,176,214,0.18); }
+    .facts { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.05em; }
+
+    .ct-layout { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 26px; align-items: start; }
+    .ct-original { margin: 0; position: sticky; top: 20px; }
+    .ct-original img { width: 100%; border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,0.5); display: block; }
+    .ct-original figcaption { margin-top: 8px; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-align: center; }
+
+    .ct-takes { display: grid; gap: 22px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .ct-take { margin: 0; }
+    .ct-vid {
+      width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: var(--panel-2);
+      border-radius: 10px; border: 1px solid var(--line);
+      box-shadow: inset 0 0 0 1px rgba(140,176,214,0.10), 0 6px 18px rgba(0,0,0,0.5);
+    }
+    .ct-take figcaption { margin-top: 10px; display: flex; flex-direction: column; gap: 7px; }
+    .ct-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .ct-num { font-family: var(--display); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brass-bright); }
+    .ct-model { font-family: var(--mono); font-size: 0.74rem; color: var(--text); word-break: break-all; }
+    .ct-prompt { font-size: 0.86rem; color: var(--muted); line-height: 1.5; }
+    .ct-plabel {
+      display: inline-block; margin-right: 6px; padding: 1px 7px; border-radius: 4px;
+      font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase;
+      border: 1px solid var(--line); color: var(--muted); vertical-align: 1px;
+    }
+    .ct-plabel.custom { color: var(--arcane); border-color: var(--arcane); }
+
+    .ct-note { margin-top: 30px; color: var(--muted); font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; }
+
+    @media (max-width: 640px) {
+      .ct-layout { grid-template-columns: 1fr; }
+      .ct-original { position: static; max-width: 280px; }
+    }
+  </style>
+</Base>

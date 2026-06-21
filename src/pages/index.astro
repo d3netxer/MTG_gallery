@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import GalleryView from '../components/GalleryView.astro';
 import curated from '../data/bakeoff.json';
+import cardTakes from '../data/card-takes.json';
 
 interface CuratedEntry {
   card: string;
@@ -12,6 +13,8 @@ interface CuratedEntry {
   usedText: boolean;
 }
 const list = curated as CuratedEntry[];
+const takesBySlug = cardTakes as Record<string, { takes: unknown[] }>;
+const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 // Slides for the full-screen reel; each carries its own pre-baked clip.
 const slides = list.map((e) => ({ image: e.image, name: e.card, setCode: e.set, year: '', artists: [], clip: e.clip }));
 ---
@@ -24,21 +27,32 @@ const slides = list.map((e) => ({ image: e.image, name: e.card, setCode: e.set, 
       {list.length} works, each brought to motion.
     </p>
     <div class="liv-actions">
-      <GalleryView slides={slides} title="The Magic Gallery" tileSelector=".liv-card" tileImageAttr="data-img" buttonLabel="▶ Play the gallery" />
+      <GalleryView slides={slides} title="The Magic Gallery" tileSelector=".liv-card:not([data-takes])" tileImageAttr="data-img" buttonLabel="▶ Play the gallery" />
       <a class="liv-browse" href="/browse">Browse the full archive →</a>
     </div>
   </section>
 
   <div class="liv-wall">
-    {list.map((e) => (
-      <figure class="liv-card" data-img={e.image}>
-        <video class="liv-vid" src={e.clip} poster={e.image} autoplay loop muted playsinline preload="metadata"></video>
-        <figcaption>
-          <span class="liv-name">{e.card}</span>
-          <span class="liv-set">{e.set}</span>
-        </figcaption>
-      </figure>
-    ))}
+    {list.map((e) => {
+      const slug = slugify(e.card);
+      const takes = takesBySlug[slug];
+      const inner = (
+        <>
+          <video class="liv-vid" src={e.clip} poster={e.image} autoplay loop muted playsinline preload="metadata"></video>
+          {takes && <span class="liv-badge">⚔ {takes.takes.length} takes</span>}
+          <figcaption>
+            <span class="liv-name">{e.card}</span>
+            <span class="liv-set">{e.set}</span>
+          </figcaption>
+        </>
+      );
+      // Cards with competing takes link to their page; the rest open the reel.
+      return takes ? (
+        <a class="liv-card" data-takes href={`/card/${slug}/`}>{inner}</a>
+      ) : (
+        <figure class="liv-card" data-img={e.image}>{inner}</figure>
+      );
+    })}
   </div>
 
   <style>
@@ -59,7 +73,14 @@ const slides = list.map((e) => ({ image: e.image, name: e.card, setCode: e.set, 
       display: grid; gap: 20px; margin-top: 30px;
       grid-template-columns: repeat(auto-fill, minmax(244px, 1fr));
     }
-    .liv-card { margin: 0; cursor: pointer; }
+    .liv-card { position: relative; margin: 0; cursor: pointer; display: block; text-decoration: none; color: inherit; }
+    .liv-badge {
+      position: absolute; top: 10px; right: 10px; z-index: 2;
+      background: linear-gradient(180deg, rgba(10,16,26,0.92), rgba(6,10,18,0.92));
+      color: var(--arcane); border: 1px solid var(--arcane);
+      padding: 3px 9px; border-radius: 4px; font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
     .liv-vid {
       width: 100%; aspect-ratio: 488 / 680; object-fit: contain; background: var(--panel-2);
       border-radius: 10px; border: 1px solid var(--line);
